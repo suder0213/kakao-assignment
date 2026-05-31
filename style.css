@@ -1,12 +1,16 @@
 /* ===========================
    기본 리셋 & 전역 설정
 =========================== */
+
+/* 모든 요소에 box-sizing을 border-box로 설정하여 패딩과 테두리를 포함한 크기 계산 */
+/* 기본적으로 세팅하는 국룰같은 느낌? */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
+/* CSS 변수로 색상, 반경, 그림자 등 공통 스타일 정의, 모든 요소의 조상이므로 어디서든 var로 사용가능 */
 :root {
   --color-primary: #672be0;
   --color-primary-light: #8b55e8;
@@ -50,6 +54,7 @@ body {
 }
 
 .app-title {
+  /* rem: 루트 요소의 폰트 크기를 기준으로 하는 단위, 보통 1rem은 16px이지만 사용자가 브라우저 설정에서 폰트 크기를 조절하면 rem도 함께 조절됨 */
   font-size: 2rem;
   font-weight: 800;
   color: var(--color-primary);
@@ -198,6 +203,7 @@ body {
    Todo 목록 & 항목
 =========================== */
 .todo-list {
+  /* none으로 설정하여 기본 리스트 스타일 제거 */
   list-style: none;
 }
 
@@ -211,6 +217,7 @@ body {
 }
 
 .todo-item:last-child {
+  /* 마지막 항목은 border-bottom 제거하여 깔끔하게 */
   border-bottom: none;
 }
 

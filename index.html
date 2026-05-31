@@ -2,6 +2,7 @@
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
+    <!-- 모바일 환경에서 화면 너비를 조절하는 역할을 함-->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Todo App</title>
     <link rel="stylesheet" href="style.css" />
@@ -25,9 +26,11 @@
             placeholder="할 일을 입력하세요"
             maxlength="100"
           />
+          <!-- 버튼은 기본적으로 submit 역할을 함 -->
           <button id="addButton" class="btn btn-add">추가</button>
         </div>
         <!-- 입력값이 비어있을 때 표시되는 안내 메시지 -->
+         <!-- hidden 클래스로 인해 평소에 보이지 않음, js에서 showError를 호출하면 hidden 클래스가 제거됨 -->
         <p id="errorMessage" class="error-message hidden">할 일을 입력해주세요.</p>
       </section>
 
@@ -51,6 +54,7 @@
 
     </div>
 
+    <!-- JavaScript 파일 -->
     <script src="app.js"></script>
   </body>
 </html>
