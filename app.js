@@ -2,7 +2,7 @@
 // 상태 관리
 // ===========================
 
-// Todo 항목 배열 (각 항목: { id, text, completed })
+// Todo 항목 배열 (각 항목: { id, text, completed, date })
 let todoList = [];
 
 // 고유 ID 생성을 위한 카운터
@@ -10,6 +10,9 @@ let nextId = 1;
 
 // 현재 선택된 필터 ('all' | 'active' | 'completed')
 let currentFilter = 'all';
+
+// 현재 선택된 날짜 (Date 객체) — 앱 시작 시 오늘 날짜로 초기화
+let currentDate = new Date();
 
 
 // ===========================
@@ -19,15 +22,101 @@ let currentFilter = 'all';
 // DOM이란?: HTML 문서의 구조화된 표현으로, JavaScript에서 HTML 요소를 조작할 수 있게 해주는 인터페이스
 // 즉 HTML의 부모 자식관계를 기반으로 요소를 객체 형태로 표현한 것
 
-const todoInput      = document.getElementById('todoInput');
-const addButton      = document.getElementById('addButton');
-const errorMessage   = document.getElementById('errorMessage');
-const todoListEl     = document.getElementById('todoList');
-const todoCountEl    = document.getElementById('todoCount');
-const todoCountLabel = document.getElementById('todoCountLabel');
-const emptyStateEl   = document.getElementById('emptyState');
+const todoInput       = document.getElementById('todoInput');
+const addButton       = document.getElementById('addButton');
+const errorMessage    = document.getElementById('errorMessage');
+const todoListEl      = document.getElementById('todoList');
+const todoCountEl     = document.getElementById('todoCount');
+const todoCountLabel  = document.getElementById('todoCountLabel');
+const emptyStateEl    = document.getElementById('emptyState');
 // querySelectorAll: 조건에 맞는 모든 요소를 NodeList로 반환
-const filterTabEls   = document.querySelectorAll('.filter-tab');
+const filterTabEls    = document.querySelectorAll('.filter-tab');
+const prevDateButton  = document.getElementById('prevDateButton');
+const nextDateButton  = document.getElementById('nextDateButton');
+const currentDateText = document.getElementById('currentDateText');
+const todayBadge      = document.getElementById('todayBadge');
+
+
+// ===========================
+// 날짜 유틸리티 함수
+// ===========================
+
+/**
+ * Date 객체를 'YYYY-MM-DD' 형식의 문자열로 변환
+ * Todo 저장 및 날짜 비교에 사용
+ * @param {Date} date
+ * @returns {string} 'YYYY-MM-DD'
+ */
+function formatDateKey(date) {
+  const year  = date.getFullYear();
+  // getMonth()는 0부터 시작하므로 +1, padStart로 한 자리 숫자 앞에 0 추가 (ex. 5 → '05')
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day   = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Date 객체를 화면에 표시할 형식으로 변환
+ * @param {Date} date
+ * @returns {string} 'YYYY년 M월 D일 (요일)'
+ */
+function formatDateDisplay(date) {
+  const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+  const year    = date.getFullYear();
+  const month   = date.getMonth() + 1;
+  const day     = date.getDate();
+  // getDay()는 요일을 0(일)~6(토) 숫자로 반환 — dayNames 배열의 인덱스로 사용
+  const dayName = dayNames[date.getDay()];
+  return `${year}년 ${month}월 ${day}일 (${dayName})`;
+}
+
+/**
+ * 두 Date 객체가 같은 날짜인지 비교 (시간 제외)
+ * @param {Date} a
+ * @param {Date} b
+ * @returns {boolean}
+ */
+function isSameDay(a, b) {
+  // 두 날짜를 모두 'YYYY-MM-DD' 문자열로 변환하여 비교
+  return formatDateKey(a) === formatDateKey(b);
+}
+
+
+// ===========================
+// 날짜 네비게이터 함수
+// ===========================
+
+/**
+ * 날짜를 하루 앞뒤로 이동
+ * @param {number} offset - 이동할 일수 (+1: 다음날, -1: 이전날)
+ */
+function moveDate(offset) {
+  // 현재 날짜를 복사한 뒤 offset만큼 날짜를 이동
+  const next = new Date(currentDate);
+  next.setDate(next.getDate() + offset);
+  currentDate = next;
+
+  // 날짜가 바뀌면 필터를 '전체'로 초기화
+  setFilter('all');
+  updateDateDisplay();
+  renderTodoList();
+}
+
+/**
+ * 날짜 네비게이터 UI 업데이트
+ * - 날짜 텍스트 갱신
+ * - 오늘 날짜일 때만 '오늘' 뱃지 표시
+ */
+function updateDateDisplay() {
+  currentDateText.textContent = formatDateDisplay(currentDate);
+
+  // 현재 선택된 날짜가 오늘이면 뱃지 표시, 아니면 숨김
+  if (isSameDay(currentDate, new Date())) {
+    todayBadge.classList.remove('hidden');
+  } else {
+    todayBadge.classList.add('hidden');
+  }
+}
 
 
 // ===========================
@@ -38,6 +127,7 @@ const filterTabEls   = document.querySelectorAll('.filter-tab');
  * Todo 생성
  * - 입력값이 비어있으면 에러 메시지를 표시하고 중단
  * - 공백만 있는 입력도 빈 값으로 처리
+ * - 현재 선택된 날짜를 date 필드에 함께 저장
  */
 function createTodo() {
   const text = todoInput.value.trim();
@@ -53,6 +143,8 @@ function createTodo() {
     id: nextId++,
     text: text,
     completed: false,
+    // 'YYYY-MM-DD' 문자열로 저장 — 날짜 비교 및 필터링에 사용
+    date: formatDateKey(currentDate),
   };
 
   todoList.push(newTodo);
@@ -178,18 +270,19 @@ function setFilter(filter) {
 }
 
 /**
- * 현재 필터에 맞게 todoList를 걸러서 반환
+ * 현재 날짜 + 현재 필터를 모두 적용하여 목록 반환
  * @returns {Array} 필터링된 Todo 배열
  */
 function getFilteredList() {
-  if (currentFilter === 'active') {
-    return todoList.filter((item) => !item.completed);
-  }
-  if (currentFilter === 'completed') {
-    return todoList.filter((item) => item.completed);
-  }
-  // 'all'이면 전체 반환
-  return todoList;
+  // 1단계: 선택된 날짜의 Todo만 추림
+  const dateKey = formatDateKey(currentDate);
+  const byDate  = todoList.filter((item) => item.date === dateKey);
+
+  // 2단계: 상태 필터 적용
+  if (currentFilter === 'active')    return byDate.filter((item) => !item.completed);
+  if (currentFilter === 'completed') return byDate.filter((item) => item.completed);
+  // 'all'이면 날짜 필터만 적용된 전체 반환
+  return byDate;
 }
 
 
@@ -198,7 +291,7 @@ function getFilteredList() {
 // ===========================
 
 /**
- * 현재 필터를 적용한 목록을 화면에 그림
+ * todoList 배열을 기반으로 전체 목록을 다시 그림
  */
 function renderTodoList() {
   // 목록 초기화
@@ -214,7 +307,7 @@ function renderTodoList() {
     emptyStateEl.classList.add('hidden');
   }
 
-  // 카운터 업데이트 — 현재 탭에 표시된 항목 수를 보여줌
+  // 카운터 업데이트
   updateCounter(filteredList.length);
 
   // 각 Todo 항목을 <li>로 생성하여 목록에 추가
@@ -246,7 +339,7 @@ function updateCounter(count) {
  */
 function updateEmptyMessage() {
   const messageMap = {
-    all: '<p>아직 할 일이 없어요.</p><p>새로운 할 일을 추가해보세요!</p>',
+    all: '<p>이 날의 할 일이 없어요.</p><p>새로운 할 일을 추가해보세요!</p>',
     active: '<p>진행 중인 할 일이 없어요.</p>',
     completed: '<p>완료된 할 일이 없어요.</p>',
   };
@@ -255,7 +348,7 @@ function updateEmptyMessage() {
 
 /**
  * Todo 객체 하나를 <li> DOM 요소로 변환
- * @param {object} todo - { id, text, completed }
+ * @param {object} todo - { id, text, completed, date }
  * @returns {HTMLElement} 생성된 <li> 요소
  */
 function createTodoElement(todo) {
@@ -336,13 +429,16 @@ todoInput.addEventListener('input', () => {
 
 // 필터 탭 클릭 — dataset.filter 값을 읽어서 setFilter에 전달
 filterTabEls.forEach((tab) => {
-  tab.addEventListener('click', () => {
-    setFilter(tab.dataset.filter);
-  });
+  tab.addEventListener('click', () => setFilter(tab.dataset.filter));
 });
+
+// 이전 / 다음 날짜 버튼
+prevDateButton.addEventListener('click', () => moveDate(-1));
+nextDateButton.addEventListener('click', () => moveDate(+1));
 
 
 // ===========================
 // 초기 렌더링
 // ===========================
+updateDateDisplay();
 renderTodoList();

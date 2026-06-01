@@ -68,6 +68,57 @@ body {
 }
 
 /* ===========================
+   날짜 네비게이터
+=========================== */
+.date-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--color-white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px 20px;
+  margin-bottom: 16px;
+}
+
+.date-nav-btn {
+  background: none;
+  border: none;
+  font-size: 1.6rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 8px;
+  transition: color 0.2s;
+}
+
+.date-nav-btn:hover {
+  color: var(--color-primary);
+}
+
+.date-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.date-text {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* 오늘 날짜일 때만 표시되는 뱃지 */
+.today-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-white);
+  background-color: var(--color-primary);
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+/* ===========================
    입력 영역
 =========================== */
 .input-section {
