@@ -167,7 +167,7 @@ body {
 }
 
 /* ===========================
-   Todo 목록 헤더
+   Todo 목록 영역
 =========================== */
 .list-section {
   background-color: var(--color-white);
@@ -176,8 +176,46 @@ body {
   overflow: hidden;
 }
 
+/* ===========================
+   필터 탭
+=========================== */
+.filter-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.filter-tab {
+  flex: 1;
+  padding: 14px 0;
+  border: none;
+  background-color: transparent;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  /* 탭 전환 시 색상이 부드럽게 변하도록 */
+  transition: color 0.2s, border-bottom-color 0.2s;
+  border-bottom: 2px solid transparent;
+  /* border-bottom이 생길 때 레이아웃이 밀리지 않도록 margin으로 상쇄 */
+  margin-bottom: -1px;
+}
+
+.filter-tab:hover {
+  color: var(--color-primary);
+}
+
+/* 선택된 탭 — 하단 밑줄과 primary 색상으로 강조 */
+.filter-tab.active {
+  color: var(--color-primary);
+  font-weight: 700;
+  border-bottom: 2px solid var(--color-primary);
+}
+
+/* ===========================
+   Todo 목록 헤더
+=========================== */
 .list-header {
-  padding: 16px 20px;
+  padding: 12px 20px;
   border-bottom: 1px solid var(--color-border);
   font-size: 0.88rem;
   color: var(--color-text-muted);
