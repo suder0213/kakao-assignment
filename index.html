@@ -16,14 +16,15 @@
         <p class="app-subtitle">오늘 할 일을 정리해보세요</p>
       </header>
 
-      <!-- 날짜 네비게이터 -->
-      <section class="date-nav">
-        <button id="prevDateButton" class="date-nav-btn">&#8249;</button>
-        <div class="date-display">
-          <span id="currentDateText" class="date-text"></span>
-          <span id="todayBadge" class="today-badge hidden">오늘</span>
+      <!-- 주간 뷰 네비게이터 -->
+      <section class="week-nav">
+        <div class="week-nav-header">
+          <button id="prevWeekButton" class="week-nav-btn">&#8249;</button>
+          <span id="weekRangeText" class="week-range-text"></span>
+          <button id="nextWeekButton" class="week-nav-btn">&#8250;</button>
         </div>
-        <button id="nextDateButton" class="date-nav-btn">&#8250;</button>
+        <!-- 7개의 날짜 셀이 JS로 렌더링되는 영역 -->
+        <div id="weekGrid" class="week-grid"></div>
       </section>
 
       <!-- Todo 입력 영역 -->

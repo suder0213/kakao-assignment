@@ -34,10 +34,10 @@ const todoCountLabel  = document.getElementById('todoCountLabel');
 const emptyStateEl    = document.getElementById('emptyState');
 // querySelectorAll: 조건에 맞는 모든 요소를 NodeList로 반환
 const filterTabEls    = document.querySelectorAll('.filter-tab');
-const prevDateButton  = document.getElementById('prevDateButton');
-const nextDateButton  = document.getElementById('nextDateButton');
-const currentDateText = document.getElementById('currentDateText');
-const todayBadge      = document.getElementById('todayBadge');
+const prevWeekButton  = document.getElementById('prevWeekButton');
+const nextWeekButton  = document.getElementById('nextWeekButton');
+const weekRangeText   = document.getElementById('weekRangeText');
+const weekGridEl      = document.getElementById('weekGrid');
 
 
 // ===========================
@@ -118,39 +118,104 @@ function isSameDay(a, b) {
 
 
 // ===========================
-// 날짜 네비게이터 함수
+// 주간 뷰 함수
 // ===========================
 
 /**
- * 날짜를 하루 앞뒤로 이동
- * @param {number} offset - 이동할 일수 (+1: 다음날, -1: 이전날)
+ * 주어진 날짜가 속한 주의 월요일을 반환
+ * JS의 getDay()는 0(일)~6(토)이므로, 월요일 기준으로 보정
+ * @param {Date} date
+ * @returns {Date} 해당 주의 월요일
  */
-function moveDate(offset) {
-  // 현재 날짜를 복사한 뒤 offset만큼 날짜를 이동
-  const next = new Date(currentDate);
-  next.setDate(next.getDate() + offset);
-  currentDate = next;
-
-  // 날짜가 바뀌면 필터를 '전체'로 초기화
-  setFilter('all');
-  updateDateDisplay();
-  renderTodoList();
+function getWeekStart(date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  // 일요일(0)이면 -6, 나머지는 -(day-1)을 더해 월요일로 이동
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  return d;
 }
 
 /**
- * 날짜 네비게이터 UI 업데이트
- * - 날짜 텍스트 갱신
- * - 오늘 날짜일 때만 '오늘' 뱃지 표시
+ * 주어진 날짜가 속한 주의 월~일 배열(7개)을 반환
+ * @param {Date} date
+ * @returns {Date[]} 월요일부터 일요일까지 7개의 Date 배열
  */
-function updateDateDisplay() {
-  currentDateText.textContent = formatDateDisplay(currentDate);
+function getWeekDates(date) {
+  const monday = getWeekStart(date);
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday);
+    d.setDate(d.getDate() + i);
+    return d;
+  });
+}
 
-  // 현재 선택된 날짜가 오늘이면 뱃지 표시, 아니면 숨김
-  if (isSameDay(currentDate, new Date())) {
-    todayBadge.classList.remove('hidden');
-  } else {
-    todayBadge.classList.add('hidden');
-  }
+/**
+ * 날짜 셀 클릭 시 호출 — 해당 날짜를 선택하고 목록을 갱신
+ * @param {string} dateKey - 'YYYY-MM-DD' 형식의 날짜 문자열
+ */
+function selectDate(dateKey) {
+  // 'YYYY-MM-DD' 문자열을 로컬 시간 기준 Date 객체로 변환
+  // new Date('YYYY-MM-DD')는 UTC 기준 파싱이라 타임존에 따라 날짜가 밀릴 수 있어 직접 파싱
+  const [y, m, d] = dateKey.split('-').map(Number);
+  currentDate = new Date(y, m - 1, d);
+  // setFilter('all')이 내부적으로 renderTodoList를 호출하므로 별도 호출 불필요
+  setFilter('all');
+}
+
+/**
+ * 주를 이동 — currentDate를 ±7일 이동
+ * @param {number} offset - +1: 다음 주, -1: 이전 주
+ */
+function moveWeek(offset) {
+  const next = new Date(currentDate);
+  next.setDate(next.getDate() + offset * 7);
+  currentDate = next;
+  // 필터를 '전체'로 초기화하고 재렌더링
+  setFilter('all');
+}
+
+/**
+ * 주간 그리드 UI 업데이트
+ * - 주간 범위 텍스트 갱신
+ * - 7개의 날짜 셀 렌더링 (오늘 강조, 선택된 날짜 강조, Todo 개수 표시)
+ */
+function updateWeekDisplay() {
+  const weekDates  = getWeekDates(currentDate);
+  const todayKey   = formatDateKey(new Date());
+  const selectedKey = formatDateKey(currentDate);
+  const dayNames   = ['월', '화', '수', '목', '금', '토', '일'];
+
+  // 주간 범위 텍스트 업데이트 (ex. "6월 2일 - 6월 8일")
+  const start = weekDates[0];
+  const end   = weekDates[6];
+  weekRangeText.textContent =
+    `${start.getMonth() + 1}월 ${start.getDate()}일 - ${end.getMonth() + 1}월 ${end.getDate()}일`;
+
+  // 그리드 초기화 후 날짜 셀 생성
+  weekGridEl.innerHTML = '';
+
+  weekDates.forEach((date, i) => {
+    const dateKey = formatDateKey(date);
+    // 해당 날짜의 전체 Todo 개수 (필터 무관)
+    const count   = todoList.filter((item) => item.date === dateKey).length;
+
+    const btn = document.createElement('button');
+    btn.className = 'day-cell';
+    btn.dataset.date = dateKey;
+
+    if (dateKey === todayKey)    btn.classList.add('today');
+    if (dateKey === selectedKey) btn.classList.add('active');
+
+    btn.innerHTML = `
+      <span class="day-name">${dayNames[i]}</span>
+      <span class="day-number">${date.getDate()}</span>
+      ${count > 0 ? `<span class="day-count">${count}</span>` : ''}
+    `;
+
+    btn.addEventListener('click', () => selectDate(dateKey));
+    weekGridEl.appendChild(btn);
+  });
 }
 
 
@@ -356,6 +421,9 @@ function renderTodoList() {
     // html에 <li> 요소가 실제로 추가되는 방식(문서가 실제로 수정됨)
     todoListEl.appendChild(li);
   });
+
+  // Todo 개수가 바뀔 수 있으므로 주간 그리드도 함께 갱신
+  updateWeekDisplay();
 }
 
 /**
@@ -471,15 +539,15 @@ filterTabEls.forEach((tab) => {
   tab.addEventListener('click', () => setFilter(tab.dataset.filter));
 });
 
-// 이전 / 다음 날짜 버튼
-prevDateButton.addEventListener('click', () => moveDate(-1));
-nextDateButton.addEventListener('click', () => moveDate(+1));
+// 이전 / 다음 주 버튼
+prevWeekButton.addEventListener('click', () => moveWeek(-1));
+nextWeekButton.addEventListener('click', () => moveWeek(+1));
 
 
 // ===========================
 // 초기 렌더링
 // ===========================
 // 로컬스토리지에서 데이터를 먼저 불러온 뒤 화면을 그림
+// renderTodoList 내부에서 updateWeekDisplay를 호출하므로 별도 호출 불필요
 loadFromStorage();
-updateDateDisplay();
 renderTodoList();

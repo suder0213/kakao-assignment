@@ -68,20 +68,24 @@ body {
 }
 
 /* ===========================
-   날짜 네비게이터
+   주간 뷰 네비게이터
 =========================== */
-.date-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.week-nav {
   background-color: var(--color-white);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  padding: 14px 20px;
+  padding: 16px 20px;
   margin-bottom: 16px;
 }
 
-.date-nav-btn {
+.week-nav-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.week-nav-btn {
   background: none;
   border: none;
   font-size: 1.6rem;
@@ -92,30 +96,89 @@ body {
   transition: color 0.2s;
 }
 
-.date-nav-btn:hover {
+.week-nav-btn:hover {
   color: var(--color-primary);
 }
 
-.date-display {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.date-text {
-  font-size: 1rem;
+.week-range-text {
+  font-size: 0.9rem;
   font-weight: 700;
   color: var(--color-text);
 }
 
-/* 오늘 날짜일 때만 표시되는 뱃지 */
-.today-badge {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--color-white);
+/* 7개 날짜 셀을 균등 분할 */
+.week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.day-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.day-cell:hover {
+  background-color: var(--color-primary-bg);
+}
+
+/* 선택된 날짜 */
+.day-cell.active {
   background-color: var(--color-primary);
-  padding: 2px 8px;
+}
+
+.day-cell.active .day-name,
+.day-cell.active .day-number {
+  color: var(--color-white);
+}
+
+/* 오늘 날짜 (선택되지 않은 상태) */
+.day-cell.today .day-number {
+  color: var(--color-primary);
+  font-weight: 800;
+}
+
+/* 오늘이면서 선택된 상태는 active 색상 유지 */
+.day-cell.active.today .day-number {
+  color: var(--color-white);
+}
+
+.day-name {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+}
+
+.day-number {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1;
+}
+
+/* 해당 날짜의 Todo 개수 뱃지 */
+.day-count {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  background-color: var(--color-primary-bg);
+  padding: 1px 5px;
   border-radius: 20px;
+  min-width: 16px;
+  text-align: center;
+}
+
+/* active 상태에서 뱃지 색상 반전 */
+.day-cell.active .day-count {
+  color: var(--color-primary);
+  background-color: rgba(255, 255, 255, 0.9);
 }
 
 /* ===========================
