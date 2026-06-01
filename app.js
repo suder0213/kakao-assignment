@@ -14,6 +14,9 @@ let currentFilter = 'all';
 // 현재 선택된 날짜 (Date 객체) — 앱 시작 시 오늘 날짜로 초기화
 let currentDate = new Date();
 
+// 로컬스토리지에서 사용할 키 — 상수로 분리하여 오타 방지
+const STORAGE_KEY = 'todo-app-list';
+
 
 // ===========================
 // DOM 요소 참조
@@ -35,6 +38,38 @@ const prevDateButton  = document.getElementById('prevDateButton');
 const nextDateButton  = document.getElementById('nextDateButton');
 const currentDateText = document.getElementById('currentDateText');
 const todayBadge      = document.getElementById('todayBadge');
+
+
+// ===========================
+// 로컬스토리지 함수
+// ===========================
+
+/**
+ * 현재 todoList 배열을 로컬스토리지에 저장
+ * - JSON.stringify: JS 객체/배열 → JSON 문자열 변환 (로컬스토리지는 문자열만 저장 가능)
+ */
+function saveToStorage() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(todoList));
+}
+
+/**
+ * 로컬스토리지에서 todoList를 불러와 복원
+ * - JSON.parse: JSON 문자열 → JS 객체/배열 변환
+ * - 저장된 데이터가 없으면 빈 배열로 유지
+ * - nextId를 기존 항목 중 가장 큰 id + 1로 설정하여 ID 충돌 방지
+ */
+function loadFromStorage() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (!saved) return;
+
+  todoList = JSON.parse(saved);
+
+  // 불러온 항목 중 가장 큰 id를 찾아 nextId 재설정
+  // 없으면 기본값 1 유지
+  if (todoList.length > 0) {
+    nextId = Math.max(...todoList.map((item) => item.id)) + 1;
+  }
+}
 
 
 // ===========================
@@ -150,6 +185,7 @@ function createTodo() {
   todoList.push(newTodo);
   todoInput.value = '';
   hideError();
+  saveToStorage();
   // 새로운 Todo가 추가된 후 전체 목록을 다시 렌더링하여 화면에 반영
   renderTodoList();
 }
@@ -163,6 +199,7 @@ function toggleComplete(id) {
   if (!todo) return;
 
   todo.completed = !todo.completed;
+  saveToStorage();
   renderTodoList();
 }
 
@@ -231,6 +268,7 @@ function saveEdit(id) {
   const todo = todoList.find((item) => item.id === id);
   if (todo) todo.text = newText;
 
+  saveToStorage();
   renderTodoList();
 }
 
@@ -242,6 +280,7 @@ function deleteTodo(id) {
   // 위에서는 find를 썼는데, 여기선 filter를 사용.
   // splice보다 filter를 사용하는 것이 더 간결하고, 불변성을 유지하는 방식이기 때문에 선호됨
   todoList = todoList.filter((item) => item.id !== id);
+  saveToStorage();
   renderTodoList();
 }
 
@@ -440,5 +479,7 @@ nextDateButton.addEventListener('click', () => moveDate(+1));
 // ===========================
 // 초기 렌더링
 // ===========================
+// 로컬스토리지에서 데이터를 먼저 불러온 뒤 화면을 그림
+loadFromStorage();
 updateDateDisplay();
 renderTodoList();
