@@ -118,7 +118,7 @@ function isSameDay(a, b) {
 
 
 // ===========================
-// 주간 뷰 함수
+// 주간 뷰 유틸리티 함수
 // ===========================
 
 /**
@@ -150,29 +150,49 @@ function getWeekDates(date) {
   });
 }
 
+
+// ===========================
+// 상태 변경 함수
+// ===========================
+// 상태 변수만 갱신하며, 렌더링은 수행하지 않는다.
+// 렌더링은 반드시 render()를 별도로 호출해야 반영된다.
+
 /**
- * 날짜 셀 클릭 시 호출 — 해당 날짜를 선택하고 목록을 갱신
- * @param {string} dateKey - 'YYYY-MM-DD' 형식의 날짜 문자열
+ * 현재 날짜 상태를 변경
+ * - new Date('YYYY-MM-DD')는 UTC 기준 파싱이라 타임존에 따라 날짜가 밀릴 수 있어 직접 파싱
+ * @param {string} dateKey - 'YYYY-MM-DD'
  */
-function selectDate(dateKey) {
-  // 'YYYY-MM-DD' 문자열을 로컬 시간 기준 Date 객체로 변환
-  // new Date('YYYY-MM-DD')는 UTC 기준 파싱이라 타임존에 따라 날짜가 밀릴 수 있어 직접 파싱
+function setCurrentDate(dateKey) {
   const [y, m, d] = dateKey.split('-').map(Number);
   currentDate = new Date(y, m - 1, d);
-  // setFilter('all')이 내부적으로 renderTodoList를 호출하므로 별도 호출 불필요
-  setFilter('all');
 }
 
 /**
- * 주를 이동 — currentDate를 ±7일 이동
- * @param {number} offset - +1: 다음 주, -1: 이전 주
+ * 현재 필터 상태를 변경
+ * @param {string} filter - 'all' | 'active' | 'completed'
  */
-function moveWeek(offset) {
-  const next = new Date(currentDate);
-  next.setDate(next.getDate() + offset * 7);
-  currentDate = next;
-  // 필터를 '전체'로 초기화하고 재렌더링
-  setFilter('all');
+function setCurrentFilter(filter) {
+  currentFilter = filter;
+}
+
+
+// ===========================
+// 렌더링 함수
+// ===========================
+// 상태를 읽어 DOM을 업데이트한다. 상태를 직접 변경하지 않는다.
+
+/**
+ * 필터 탭 UI를 현재 필터 상태에 맞게 업데이트
+ */
+function updateFilterTabs() {
+  // 모든 탭에서 active 클래스를 제거하고, 현재 필터에 해당하는 탭에만 active 클래스를 추가
+  filterTabEls.forEach((tab) => {
+    if (tab.dataset.filter === currentFilter) {
+      tab.classList.add('active');
+    } else {
+      tab.classList.remove('active');
+    }
+  });
 }
 
 /**
@@ -218,6 +238,120 @@ function updateWeekDisplay() {
   });
 }
 
+/**
+ * todoList 배열을 기반으로 전체 목록을 다시 그림
+ */
+function renderTodoList() {
+  // 목록 초기화
+  todoListEl.innerHTML = '';
+
+  const filteredList = getFilteredList();
+
+  // 빈 상태 / 목록 가시성 제어
+  if (filteredList.length === 0) {
+    emptyStateEl.classList.remove('hidden');
+    updateEmptyMessage();
+  } else {
+    emptyStateEl.classList.add('hidden');
+  }
+
+  // 카운터 업데이트
+  updateCounter(filteredList.length);
+
+  // 각 Todo 항목을 <li>로 생성하여 목록에 추가
+  filteredList.forEach((todo) => {
+    const li = createTodoElement(todo);
+    // todoList 안에 child로 li를 추가하는 형태로 DOM 트리에 삽입
+    // html에 <li> 요소가 실제로 추가되는 방식(문서가 실제로 수정됨)
+    todoListEl.appendChild(li);
+  });
+}
+
+/**
+ * 카운터 텍스트를 현재 필터에 맞게 업데이트
+ * @param {number} count - 표시 중인 항목 수
+ */
+function updateCounter(count) {
+  todoCountEl.textContent = `${count}개`;
+
+  const labelMap = {
+    all: '의 할 일',
+    active: '의 진행 중인 할 일',
+    completed: '의 완료된 할 일',
+  };
+  todoCountLabel.textContent = labelMap[currentFilter];
+}
+
+/**
+ * 빈 상태 메시지를 현재 필터에 맞게 업데이트
+ */
+function updateEmptyMessage() {
+  const messageMap = {
+    all: '<p>이 날의 할 일이 없어요.</p><p>새로운 할 일을 추가해보세요!</p>',
+    active: '<p>진행 중인 할 일이 없어요.</p>',
+    completed: '<p>완료된 할 일이 없어요.</p>',
+  };
+  emptyStateEl.innerHTML = messageMap[currentFilter];
+}
+
+/**
+ * Todo 객체 하나를 <li> DOM 요소로 변환
+ * @param {object} todo - { id, text, completed, date }
+ * @returns {HTMLElement} 생성된 <li> 요소
+ */
+function createTodoElement(todo) {
+  const li = document.createElement('li');
+  li.className = `todo-item${todo.completed ? ' completed' : ''}`;
+  li.dataset.id = todo.id; // 이후 DOM 탐색 시 ID로 항목 식별
+  // ex) querySelector(`[data-id="${id}"]`) 에서 사용됨
+
+  // 완료 버튼 텍스트: 완료 여부에 따라 다르게 표시
+  const completeLabel = todo.completed ? '취소' : '완료';
+
+  // UI에 삽입할 HTML 구조를 문자열로 작성, 템플릿 리터럴을 사용하여 변수와 표현식을 쉽게 삽입
+  li.innerHTML = `
+    <span class="todo-text">${escapeHtml(todo.text)}</span>
+    <div class="todo-actions">
+      <button class="btn btn-complete" onclick="toggleComplete(${todo.id})">${completeLabel}</button>
+      <button class="btn btn-edit" onclick="startEdit(${todo.id})">수정</button>
+      <button class="btn btn-delete" onclick="deleteTodo(${todo.id})">삭제</button>
+    </div>
+  `;
+
+  return li;
+}
+
+/**
+ * 모든 UI를 현재 상태 기준으로 다시 그린다.
+ * 상태를 변경한 뒤에는 반드시 이 함수를 호출해야 화면에 반영된다.
+ */
+function render() {
+  updateFilterTabs();
+  renderTodoList();
+  updateWeekDisplay();
+}
+
+
+// ===========================
+// 현재 날짜 + 필터 기반 목록 조회
+// ===========================
+
+/**
+ * 현재 날짜 + 현재 필터를 모두 적용하여 목록 반환
+ * @returns {Array} 필터링된 Todo 배열
+ */
+function getFilteredList() {
+  // 1단계: 선택된 날짜의 Todo만 추림
+  const dateKey = formatDateKey(currentDate);
+  const byDate  = todoList.filter((item) => item.date === dateKey);
+
+  // 2단계: 상태 필터 적용
+  if (currentFilter === 'active')    return byDate.filter((item) => !item.completed);
+  if (currentFilter === 'completed') return byDate.filter((item) => item.completed);
+  // 'all'이면 날짜 필터만 적용된 전체 반환
+  return byDate;
+}
+
 
 // ===========================
 // 핵심 CRUD 함수
@@ -251,8 +385,8 @@ function createTodo() {
   todoInput.value = '';
   hideError();
   saveToStorage();
-  // 새로운 Todo가 추가된 후 전체 목록을 다시 렌더링하여 화면에 반영
-  renderTodoList();
+  // 새로운 Todo가 추가된 후 전체 UI를 다시 렌더링하여 화면에 반영
+  render();
 }
 
 /**
@@ -265,7 +399,7 @@ function toggleComplete(id) {
 
   todo.completed = !todo.completed;
   saveToStorage();
-  renderTodoList();
+  render();
 }
 
 
@@ -334,7 +468,7 @@ function saveEdit(id) {
   if (todo) todo.text = newText;
 
   saveToStorage();
-  renderTodoList();
+  render();
 }
 
 /**
@@ -346,138 +480,35 @@ function deleteTodo(id) {
   // splice보다 filter를 사용하는 것이 더 간결하고, 불변성을 유지하는 방식이기 때문에 선호됨
   todoList = todoList.filter((item) => item.id !== id);
   saveToStorage();
-  renderTodoList();
+  render();
 }
 
 
 // ===========================
-// 필터 함수
+// 네비게이션 함수
 // ===========================
 
 /**
- * 현재 필터 상태를 변경하고 화면을 다시 그림
- * @param {string} filter - 'all' | 'active' | 'completed'
+ * 날짜 셀 클릭 시 호출 — 해당 날짜를 선택하고 화면을 갱신
+ * @param {string} dateKey - 'YYYY-MM-DD' 형식의 날짜 문자열
  */
-function setFilter(filter) {
-  currentFilter = filter;
-
-  // 모든 탭에서 active 클래스를 제거하고, 클릭된 탭에만 active 클래스를 추가
-  filterTabEls.forEach((tab) => {
-    if (tab.dataset.filter === filter) {
-      tab.classList.add('active');
-    } else {
-      tab.classList.remove('active');
-    }
-  });
-
-  renderTodoList();
+function selectDate(dateKey) {
+  setCurrentDate(dateKey);
+  setCurrentFilter('all');
+  render();
 }
 
 /**
- * 현재 날짜 + 현재 필터를 모두 적용하여 목록 반환
- * @returns {Array} 필터링된 Todo 배열
+ * 주를 이동 — currentDate를 ±7일 이동
+ * @param {number} offset - +1: 다음 주, -1: 이전 주
  */
-function getFilteredList() {
-  // 1단계: 선택된 날짜의 Todo만 추림
-  const dateKey = formatDateKey(currentDate);
-  const byDate  = todoList.filter((item) => item.date === dateKey);
-
-  // 2단계: 상태 필터 적용
-  if (currentFilter === 'active')    return byDate.filter((item) => !item.completed);
-  if (currentFilter === 'completed') return byDate.filter((item) => item.completed);
-  // 'all'이면 날짜 필터만 적용된 전체 반환
-  return byDate;
-}
-
-
-// ===========================
-// 렌더링 함수
-// ===========================
-
-/**
- * todoList 배열을 기반으로 전체 목록을 다시 그림
- */
-function renderTodoList() {
-  // 목록 초기화
-  todoListEl.innerHTML = '';
-
-  const filteredList = getFilteredList();
-
-  // 빈 상태 / 목록 가시성 제어
-  if (filteredList.length === 0) {
-    emptyStateEl.classList.remove('hidden');
-    updateEmptyMessage();
-  } else {
-    emptyStateEl.classList.add('hidden');
-  }
-
-  // 카운터 업데이트
-  updateCounter(filteredList.length);
-
-  // 각 Todo 항목을 <li>로 생성하여 목록에 추가
-  filteredList.forEach((todo) => {
-    const li = createTodoElement(todo);
-    // todoList 안에 child로 li를 추가하는 형태로 DOM 트리에 삽입
-    // html에 <li> 요소가 실제로 추가되는 방식(문서가 실제로 수정됨)
-    todoListEl.appendChild(li);
-  });
-
-  // Todo 개수가 바뀔 수 있으므로 주간 그리드도 함께 갱신
-  updateWeekDisplay();
-}
-
-/**
- * 카운터 텍스트를 현재 필터에 맞게 업데이트
- * @param {number} count - 표시 중인 항목 수
- */
-function updateCounter(count) {
-  todoCountEl.textContent = `${count}개`;
-
-  const labelMap = {
-    all: '의 할 일',
-    active: '의 진행 중인 할 일',
-    completed: '의 완료된 할 일',
-  };
-  todoCountLabel.textContent = labelMap[currentFilter];
-}
-
-/**
- * 빈 상태 메시지를 현재 필터에 맞게 업데이트
- */
-function updateEmptyMessage() {
-  const messageMap = {
-    all: '<p>이 날의 할 일이 없어요.</p><p>새로운 할 일을 추가해보세요!</p>',
-    active: '<p>진행 중인 할 일이 없어요.</p>',
-    completed: '<p>완료된 할 일이 없어요.</p>',
-  };
-  emptyStateEl.innerHTML = messageMap[currentFilter];
-}
-
-/**
- * Todo 객체 하나를 <li> DOM 요소로 변환
- * @param {object} todo - { id, text, completed, date }
- * @returns {HTMLElement} 생성된 <li> 요소
- */
-function createTodoElement(todo) {
-  const li = document.createElement('li');
-  li.className = `todo-item${todo.completed ? ' completed' : ''}`;
-  li.dataset.id = todo.id; // 이후 DOM 탐색 시 ID로 항목 식별
-  // ex) querySelector(`[data-id="${id}"]`) 에서 사용됨
-
-  // 완료 버튼 텍스트: 완료 여부에 따라 다르게 표시
-  const completeLabel = todo.completed ? '취소' : '완료';
-
-  // UI에 삽입할 HTML 구조를 문자열로 작성, 템플릿 리터럴을 사용하여 변수와 표현식을 쉽게 삽입
-  li.innerHTML = `
-    <span class="todo-text">${escapeHtml(todo.text)}</span>
-    <div class="todo-actions">
-      <button class="btn btn-complete" onclick="toggleComplete(${todo.id})">${completeLabel}</button>
-      <button class="btn btn-edit" onclick="startEdit(${todo.id})">수정</button>
-      <button class="btn btn-delete" onclick="deleteTodo(${todo.id})">삭제</button>
-    </div>
-  `;
-
-  return li;
+function moveWeek(offset) {
+  const next = new Date(currentDate);
+  next.setDate(next.getDate() + offset * 7);
+  currentDate = next;
+  // 필터를 '전체'로 초기화하고 재렌더링
+  setCurrentFilter('all');
+  render();
 }
 
 
@@ -534,9 +565,12 @@ todoInput.addEventListener('input', () => {
   if (todoInput.value.trim()) hideError();
 });
 
-// 필터 탭 클릭 — dataset.filter 값을 읽어서 setFilter에 전달
+// 필터 탭 클릭 — 상태를 변경한 뒤 render()를 명시적으로 호출
 filterTabEls.forEach((tab) => {
-  tab.addEventListener('click', () => setFilter(tab.dataset.filter));
+  tab.addEventListener('click', () => {
+    setCurrentFilter(tab.dataset.filter);
+    render();
+  });
 });
 
 // 이전 / 다음 주 버튼
@@ -548,6 +582,5 @@ nextWeekButton.addEventListener('click', () => moveWeek(+1));
 // 초기 렌더링
 // ===========================
 // 로컬스토리지에서 데이터를 먼저 불러온 뒤 화면을 그림
-// renderTodoList 내부에서 updateWeekDisplay를 호출하므로 별도 호출 불필요
 loadFromStorage();
-renderTodoList();
+render();
