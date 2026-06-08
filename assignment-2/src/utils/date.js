@@ -36,3 +36,28 @@ export function formatDateDisplay(date) {
 export function isSameDay(a, b) {
   return formatDateKey(a) === formatDateKey(b)
 }
+
+/**
+ * 주어진 날짜가 속한 주의 월요일을 반환
+ * JS의 getDay()는 0(일)~6(토)이므로 월요일 기준으로 보정
+ */
+export function getWeekStart(date) {
+  const d = new Date(date)
+  const day = d.getDay()
+  // 일요일(0)이면 -6, 나머지는 -(day-1)을 더해 월요일로 이동
+  const diff = day === 0 ? -6 : 1 - day
+  d.setDate(d.getDate() + diff)
+  return d
+}
+
+/**
+ * 주어진 날짜가 속한 주의 월~일 배열(7개)을 반환
+ */
+export function getWeekDates(date) {
+  const monday = getWeekStart(date)
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday)
+    d.setDate(d.getDate() + i)
+    return d
+  })
+}

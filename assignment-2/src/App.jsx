@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import TodoInput from './components/TodoInput'
 import TodoList from './components/TodoList'
 import FilterTabs from './components/FilterTabs'
-import DateNav from './components/DateNav'
+import WeekNav from './components/WeekNav'
 import { formatDateKey } from './utils/date'
 
 // ===========================
@@ -114,10 +114,11 @@ function App() {
         <p className="app-subtitle">오늘 할 일을 정리해보세요</p>
       </header>
 
-      {/* 일간 날짜 네비게이터 — step6에서 WeekNav로 교체 예정 */}
-      {/* 날짜가 바뀌면 필터를 'all'로 초기화한다. */}
-      <DateNav
+      {/* 주간 뷰 네비게이터 — 날짜가 바뀌면 필터를 'all'로 초기화한다. */}
+      {/* todoList(전체)를 전달해야 날짜별 뱃지 개수를 올바르게 계산한다. */}
+      <WeekNav
         currentDate={currentDate}
+        todoList={todoList}
         onDateChange={(next) => {
           setCurrentDate(next)
           setCurrentFilter('all')
