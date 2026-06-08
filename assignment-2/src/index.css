@@ -1,111 +1,405 @@
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+/* ===========================
+   기본 리셋 & 전역 설정
+=========================== */
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+/* 모든 요소에 box-sizing을 border-box로 설정하여 패딩과 테두리를 포함한 크기 계산 */
+/* 기본적으로 세팅하는 국룰같은 느낌? */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+/* CSS 변수로 색상, 반경, 그림자 등 공통 스타일 정의, 모든 요소의 조상이므로 어디서든 var로 사용가능 */
+:root {
+  --color-primary: #672be0;
+  --color-primary-light: #8b55e8;
+  --color-primary-dark: #4f1fb3;
+  --color-primary-bg: #f3eeff;
+  --color-danger: #e03b2b;
+  --color-danger-light: #ffeeed;
+  --color-success: #2be068;
+  --color-text: #1a1a2e;
+  --color-text-muted: #888;
+  --color-border: #e0e0e0;
+  --color-bg: #f7f7fb;
+  --color-white: #ffffff;
+  --radius: 10px;
+  --shadow: 0 4px 24px rgba(103, 43, 224, 0.08);
 }
 
 body {
-  margin: 0;
+  font-family: 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 48px 16px;
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
+/* ===========================
+   레이아웃 컨테이너
+=========================== */
+.container {
+  width: 100%;
+  max-width: 560px;
+}
+
+/* ===========================
+   앱 헤더
+=========================== */
+.app-header {
+  margin-bottom: 32px;
+}
+
+.app-title {
+  /* rem: 루트 요소의 폰트 크기를 기준으로 하는 단위, 보통 1rem은 16px이지만 사용자가 브라우저 설정에서 폰트 크기를 조절하면 rem도 함께 조절됨 */
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  letter-spacing: -0.5px;
+}
+
+.app-subtitle {
+  margin-top: 4px;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+/* ===========================
+   주간 뷰 네비게이터
+=========================== */
+.week-nav {
+  background-color: var(--color-white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px 20px;
+  margin-bottom: 16px;
+}
+
+.week-nav-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.week-nav-btn {
+  background: none;
+  border: none;
+  font-size: 1.6rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 8px;
+  transition: color 0.2s;
+}
+
+.week-nav-btn:hover {
+  color: var(--color-primary);
+}
+
+.week-range-text {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* 7개 날짜 셀을 균등 분할 */
+.week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.day-cell {
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 0.15s;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
+.day-cell:hover {
+  background-color: var(--color-primary-bg);
+}
+
+/* 선택된 날짜 */
+.day-cell.active {
+  background-color: var(--color-primary);
+}
+
+.day-cell.active .day-name,
+.day-cell.active .day-number {
+  color: var(--color-white);
+}
+
+/* 오늘 날짜 (선택되지 않은 상태) */
+.day-cell.today .day-number {
+  color: var(--color-primary);
+  font-weight: 800;
+}
+
+/* 오늘이면서 선택된 상태는 active 색상 유지 */
+.day-cell.active.today .day-number {
+  color: var(--color-white);
+}
+
+.day-name {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+}
+
+.day-number {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1;
+}
+
+/* 해당 날짜의 Todo 개수 뱃지 */
+.day-count {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  background-color: var(--color-primary-bg);
+  padding: 1px 5px;
+  border-radius: 20px;
+  min-width: 16px;
+  text-align: center;
+}
+
+/* active 상태에서 뱃지 색상 반전 */
+.day-cell.active .day-count {
+  color: var(--color-primary);
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+/* ===========================
+   입력 영역
+=========================== */
+.input-section {
+  margin-bottom: 32px;
+}
+
+.input-wrapper {
+  display: flex;
+  gap: 8px;
+}
+
+.todo-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+  color: var(--color-text);
+  background-color: var(--color-white);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+/* 입력창 포커스 시 primary 색상 테두리 */
+.todo-input:focus {
+  border-color: var(--color-primary);
+}
+
+/* ===========================
+   버튼 공통 스타일
+=========================== */
+.btn {
+  padding: 12px 20px;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, opacity 0.2s;
+  white-space: nowrap;
+}
+
+.btn:hover {
+  opacity: 0.88;
+}
+
+/* 추가 버튼 */
+.btn-add {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+}
+
+/* 완료 버튼 */
+.btn-complete {
+  background-color: var(--color-primary-bg);
+  color: var(--color-primary);
+  padding: 6px 12px;
+  font-size: 0.8rem;
+}
+
+/* 수정 버튼 */
+.btn-edit {
+  background-color: #f0f0f0;
+  color: var(--color-text);
+  padding: 6px 12px;
+  font-size: 0.8rem;
+}
+
+/* 저장 버튼 (수정 모드) */
+.btn-save {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  padding: 6px 12px;
+  font-size: 0.8rem;
+}
+
+/* 삭제 버튼 */
+.btn-delete {
+  background-color: var(--color-danger-light);
+  color: var(--color-danger);
+  padding: 6px 12px;
+  font-size: 0.8rem;
+}
+
+/* ===========================
+   에러 메시지
+=========================== */
+.error-message {
+  margin-top: 8px;
+  font-size: 0.82rem;
+  color: var(--color-danger);
+}
+
+/* ===========================
+   Todo 목록 영역
+=========================== */
+.list-section {
+  background-color: var(--color-white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+/* ===========================
+   필터 탭
+=========================== */
+.filter-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.filter-tab {
+  flex: 1;
+  padding: 14px 0;
+  border: none;
+  background-color: transparent;
+  font-size: 0.88rem;
   font-weight: 500;
-  color: var(--text-h);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  /* 탭 전환 시 색상이 부드럽게 변하도록 */
+  transition: color 0.2s, border-bottom-color 0.2s;
+  border-bottom: 2px solid transparent;
+  /* border-bottom이 생길 때 레이아웃이 밀리지 않도록 margin으로 상쇄 */
+  margin-bottom: -1px;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
+.filter-tab:hover {
+  color: var(--color-primary);
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+/* 선택된 탭 — 하단 밑줄과 primary 색상으로 강조 */
+.filter-tab.active {
+  color: var(--color-primary);
+  font-weight: 700;
+  border-bottom: 2px solid var(--color-primary);
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+/* ===========================
+   Todo 목록 헤더
+=========================== */
+.list-header {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.88rem;
+  color: var(--color-text-muted);
+}
+
+.todo-count {
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+/* ===========================
+   빈 상태 메시지
+=========================== */
+.empty-state {
+  padding: 48px 20px;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  line-height: 1.8;
+}
+
+/* ===========================
+   Todo 목록 & 항목
+=========================== */
+.todo-list {
+  /* none으로 설정하여 기본 리스트 스타일 제거 */
+  list-style: none;
+}
+
+.todo-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--color-border);
+  transition: background-color 0.15s;
+}
+
+.todo-item:last-child {
+  /* 마지막 항목은 border-bottom 제거하여 깔끔하게 */
+  border-bottom: none;
+}
+
+.todo-item:hover {
+  background-color: var(--color-bg);
+}
+
+/* 완료된 항목 스타일 */
+.todo-item.completed .todo-text {
+  text-decoration: line-through;
+  color: var(--color-text-muted);
+}
+
+/* Todo 텍스트 */
+.todo-text {
+  flex: 1;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+/* 수정 모드 인라인 입력창 */
+.edit-input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 2px solid var(--color-primary);
+  border-radius: 6px;
+  font-size: 0.95rem;
+  color: var(--color-text);
+  outline: none;
+}
+
+/* 항목별 버튼 그룹 */
+.todo-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
 }
