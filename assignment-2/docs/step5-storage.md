@@ -4,6 +4,14 @@
 
 > 이제 다시 문서와 코드를 검토하고 5단계를 구현해줘
 
+> 굳이 함수를 사용하지 않아도 useState의 기본값은 처음에만 실행되는거 아니야?
+
+> 왜 이런 차이가 있는거야?
+
+> 그렇다면 처음에는 어떤 기준으로 실행했고, 왜 그 다음엔 실행 안 하는데?
+
+> 슬롯이 뭐야?
+
 ---
 
 ## 핵심 구현 내용 요약
@@ -152,6 +160,70 @@ const [list, setList] = useState(() => {
 
 `localStorage.getItem()`은 실제로 가벼운 작업이지만,  
 초기화 목적임을 명시하고 불필요한 반복 실행을 막기 위해 lazy initializer가 관례적으로 사용된다.
+
+---
+
+#### 추가 질문: 함수를 안 써도 기본값은 처음에만 쓰이는 거 아닌가?
+
+반은 맞고 반은 틀리다. React가 초기값을 **사용**하는 건 첫 렌더에만 맞다.  
+하지만 JavaScript가 인자 표현식을 **평가**하는 건 매 렌더마다 일어난다.
+
+```jsx
+// 값 직접 전달
+useState(JSON.parse(localStorage.getItem(KEY)) || [])
+//       ↑ 이 표현식은 매 렌더마다 실행됨 — React는 결과를 버리지만 JS는 이미 실행함
+```
+
+이는 JavaScript가 함수를 호출하기 전에 인자를 먼저 평가하는 기본 동작 때문이다.  
+`useState`가 그 값을 쓸지 말지는 모른 채로, 인자가 먼저 계산된다.
+
+```jsx
+// 함수 참조를 전달하면 React가 호출 시점을 제어할 수 있다
+useState(() => JSON.parse(localStorage.getItem(KEY)) || [])
+//       ↑ JSON.parse는 실행되지 않음 — React가 첫 렌더에만 이 함수를 호출
+```
+
+일반 함수 호출에서도 동일한 원리가 적용된다.
+
+```js
+greet(heavyComputation())         // heavyComputation은 무조건 실행됨
+greet(() => heavyComputation())   // greet 내부에서 호출하지 않으면 실행 안 됨
+```
+
+---
+
+#### 추가 질문: 처음에는 어떤 기준으로 실행하고, 이후엔 왜 실행 안 하는가?
+
+React는 컴포넌트마다 **배열**을 하나 유지한다. `useState`를 호출할 때마다 이 배열의 다음 칸에 값을 저장한다.
+
+```jsx
+const [todoList, setTodoList]         = useState([])         // 인덱스 0
+const [currentFilter, setCurrentFilter] = useState('all')    // 인덱스 1
+const [currentDate, setCurrentDate]   = useState(new Date()) // 인덱스 2
+```
+
+```
+App 컴포넌트의 배열: [ [], 'all', Date객체 ]
+                      0    1      2
+```
+
+**첫 렌더**: 배열이 비어 있으므로 초기값(또는 lazy initializer 호출 결과)을 저장한다.  
+**이후 렌더**: 해당 인덱스에 이미 값이 있으므로 초기값 인자를 무시하고 저장된 값을 반환한다.
+
+이 구조 때문에 hooks를 `if` 안에서 쓰면 안 된다는 규칙이 생긴다.  
+조건에 따라 호출 순서가 달라지면 인덱스가 밀려 엉뚱한 값을 읽게 된다.
+
+```jsx
+// 첫 렌더: [A, B] — 인덱스 0=A, 1=B
+const [a] = useState(A)
+const [b] = useState(B)
+
+// 조건이 false인 리렌더: [A, B] 그대로지만 useState가 한 번만 불림
+if (condition) {
+  const [a] = useState(A)  // condition=false면 건너뜀
+}
+const [b] = useState(B)    // 인덱스 0을 읽음 → 원래 A 값이 나옴
+```
 
 ---
 
