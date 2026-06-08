@@ -122,6 +122,48 @@ createRoot(document.getElementById('root')).render(
 - `.render(<App />)`: `App` 컴포넌트를 루트에 그린다. 이후 모든 UI 업데이트는 React가 이 루트 안에서 관리한다.
 - `StrictMode`: 개발 중 잠재적인 문제를 감지하기 위해 일부 함수를 의도적으로 두 번 호출한다. 프로덕션 빌드에서는 동작하지 않는다.
 
+> **추가 질문: StrictMode가 검출하는 버그에는 어떤 예가 있어?**
+>
+> 대표적인 세 가지 문제를 감지한다.
+>
+> **1. 순수하지 않은 렌더 함수**
+>
+> StrictMode는 컴포넌트 함수를 의도적으로 두 번 호출한다. 렌더 함수는 같은 입력이면 항상 같은 출력을 내야 하는데, 외부 변수에 의존하면 두 번 호출했을 때 결과가 달라진다.
+>
+> ```jsx
+> let count = 0
+>
+> function Counter() {
+>   count++  // 렌더할 때마다 외부 변수를 바꿈
+>   return <p>{count}</p>
+>   // 정상 모드: 1 표시
+>   // StrictMode: 두 번 호출 → 2 표시 → 버그 노출
+> }
+> ```
+>
+> **2. `useEffect` 클린업 누락**
+>
+> StrictMode는 마운트 → 언마운트 → 재마운트를 강제로 한 번 더 실행한다. 이벤트 리스너나 타이머를 등록하고 클린업하지 않으면 중복 등록 버그가 드러난다.
+>
+> ```jsx
+> useEffect(() => {
+>   window.addEventListener('resize', handleResize)
+>   // 클린업 없음 → 재마운트 시 리스너가 두 개 등록됨
+> }, [])
+>
+> // 올바른 방법
+> useEffect(() => {
+>   window.addEventListener('resize', handleResize)
+>   return () => window.removeEventListener('resize', handleResize)  // 클린업
+> }, [])
+> ```
+>
+> **3. 더 이상 사용되지 않는 API 감지**
+>
+> React가 deprecated 처리한 구식 API를 사용하면 콘솔에 경고를 출력한다. 클래스 컴포넌트의 `componentWillMount`, `componentWillUpdate` 같은 라이프사이클 메서드가 해당된다. 현재 함수형 컴포넌트 중심으로 개발하면 크게 해당되지 않는다.
+>
+> 세 경우 모두 **프로덕션에서는 조용히 넘어가지만 나중에 찾기 어려운 버그들**이다. StrictMode는 이것들을 개발 중에 일부러 과장해서 드러낸다.
+
 ### `.jsx` 확장자
 
 `.jsx`는 JS 안에 HTML처럼 생긴 JSX 문법을 쓸 수 있는 파일이다. 브라우저가 직접 이해하는 것이 아니라 Vite(내부적으로 Babel 또는 esbuild)가 빌드 시점에 일반 JS로 변환한다.
