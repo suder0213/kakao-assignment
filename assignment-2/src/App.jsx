@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import TodoInput from './components/TodoInput'
 import TodoList from './components/TodoList'
 import FilterTabs from './components/FilterTabs'
@@ -9,21 +9,42 @@ import { formatDateKey } from './utils/date'
 // App — 최상위 컴포넌트
 // 상태를 보유하고, CRUD 함수를 자식 컴포넌트에 props로 전달한다.
 // ===========================
+
+// 로컬스토리지 키 — 상수로 분리하여 오타 방지
+const STORAGE_KEY = 'todo-app-list'
+
 function App() {
-  // useState: 상태를 선언한다. 값이 바뀌면 React가 자동으로 컴포넌트를 다시 렌더링한다.
-  // Vanilla JS의 `let todoList = []` + `render()` 호출에 해당한다.
-  const [todoList, setTodoList] = useState([])
+  // useState lazy initializer: 함수를 전달하면 첫 렌더 시 한 번만 실행된다.
+  // 로컬스토리지 읽기처럼 "초기화할 때 한 번만 필요한 비용"에 적합하다.
+  // Vanilla JS의 `loadFromStorage()` + `let todoList = []` 두 줄을 한 줄로 대체한다.
+  const [todoList, setTodoList] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    return saved ? JSON.parse(saved) : []
+  })
 
   // useRef: 렌더와 무관하게 값을 유지하는 컨테이너.
-  // useState와 달리 값이 바뀌어도 리렌더를 유발하지 않는다.
-  // nextId는 화면에 표시되지 않으므로 useRef가 적합하다.
-  const nextId = useRef(1)
+  // todoList가 이미 선언된 뒤에 useRef가 실행되므로, 로드된 데이터를 기반으로 nextId를 초기화할 수 있다.
+  // Vanilla JS의 `nextId = Math.max(...todoList.map(item => item.id)) + 1` 로직에 해당한다.
+  const nextId = useRef(
+    todoList.length > 0
+      ? Math.max(...todoList.map(item => item.id)) + 1
+      : 1
+  )
 
   // 현재 선택된 필터 상태
   const [currentFilter, setCurrentFilter] = useState('all')
 
   // 현재 선택된 날짜 상태 — 앱 시작 시 오늘로 초기화
   const [currentDate, setCurrentDate] = useState(new Date())
+
+  // ── 사이드 이펙트 ─────────────────────────────────────
+  // useEffect: 렌더 결과를 화면에 반영한 뒤 실행되는 사이드 이펙트 처리.
+  // 의존성 배열의 값이 바뀔 때마다 재실행된다.
+  // Vanilla JS에서는 각 CRUD 함수 끝마다 saveToStorage()를 명시적으로 호출해야 했지만,
+  // useEffect를 쓰면 todoList가 바뀔 때마다 자동으로 한 곳에서만 저장한다.
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(todoList))
+  }, [todoList])
 
   // ── 파생 상태 (Derived State) ─────────────────────────
   // filteredList는 별도의 state가 아니라 매 렌더마다 계산한다.
