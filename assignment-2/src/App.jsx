@@ -2,14 +2,8 @@ import { useState, useRef } from 'react'
 import TodoInput from './components/TodoInput'
 import TodoList from './components/TodoList'
 import FilterTabs from './components/FilterTabs'
-
-// 날짜 키 생성 (YYYY-MM-DD) — step4에서 src/utils/date.js로 분리 예정
-function formatDateKey(date) {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
-}
+import DateNav from './components/DateNav'
+import { formatDateKey } from './utils/date'
 
 // ===========================
 // App — 최상위 컴포넌트
@@ -28,15 +22,22 @@ function App() {
   // 현재 선택된 필터 상태
   const [currentFilter, setCurrentFilter] = useState('all')
 
+  // 현재 선택된 날짜 상태 — 앱 시작 시 오늘로 초기화
+  const [currentDate, setCurrentDate] = useState(new Date())
+
   // ── 파생 상태 (Derived State) ─────────────────────────
-  // filteredList는 별도의 state가 아니라 todoList + currentFilter에서 매 렌더마다 계산한다.
-  // Vanilla JS의 getFilteredList() 함수에 해당하지만,
-  // React에서는 상태가 바뀌면 렌더가 자동으로 실행되므로 함수 호출이 필요 없다.
-  const filteredList = todoList.filter(item => {
-    if (currentFilter === 'active')    return !item.completed
-    if (currentFilter === 'completed') return item.completed
-    return true
-  })
+  // filteredList는 별도의 state가 아니라 매 렌더마다 계산한다.
+  // step4부터 날짜 필터(1단계)와 상태 필터(2단계)를 순서대로 적용한다.
+  const dateKey = formatDateKey(currentDate)
+  const filteredList = todoList
+    // 1단계: 선택된 날짜의 Todo만 추린다
+    .filter(item => item.date === dateKey)
+    // 2단계: 상태 필터 적용
+    .filter(item => {
+      if (currentFilter === 'active')    return !item.completed
+      if (currentFilter === 'completed') return item.completed
+      return true
+    })
 
   const countLabelMap = {
     all:       '의 할 일',
@@ -50,8 +51,9 @@ function App() {
       id: nextId.current++,
       text,
       completed: false,
-      // 날짜는 데이터 모델에 포함하되, 필터링은 step4(일간 뷰)에서 구현한다.
-      date: formatDateKey(new Date()),
+      // 현재 선택된 날짜에 Todo를 추가한다.
+      // step3까지는 항상 오늘 날짜였지만, step4부터 currentDate를 기준으로 한다.
+      date: formatDateKey(currentDate),
     }
     // 상태를 직접 변경하지 않고 새 배열을 만들어 setTodoList에 전달한다.
     // React는 이전 배열과 새 배열을 비교하여 변경된 부분만 DOM에 반영한다.
@@ -90,6 +92,16 @@ function App() {
         <h1 className="app-title">Todo</h1>
         <p className="app-subtitle">오늘 할 일을 정리해보세요</p>
       </header>
+
+      {/* 일간 날짜 네비게이터 — step6에서 WeekNav로 교체 예정 */}
+      {/* 날짜가 바뀌면 필터를 'all'로 초기화한다. */}
+      <DateNav
+        currentDate={currentDate}
+        onDateChange={(next) => {
+          setCurrentDate(next)
+          setCurrentFilter('all')
+        }}
+      />
 
       <TodoInput onAdd={createTodo} />
 
