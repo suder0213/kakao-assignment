@@ -2,14 +2,20 @@ import TodoItem from './TodoItem'
 
 // ===========================
 // TodoList — Todo 목록
-// props: todoList, onToggle, onSave, onDelete
+// props: todoList, currentFilter, onToggle, onSave, onDelete
 // ===========================
-function TodoList({ todoList, onToggle, onSave, onDelete }) {
+function TodoList({ todoList, currentFilter, onToggle, onSave, onDelete }) {
   if (todoList.length === 0) {
+    // 현재 필터에 따라 빈 상태 메시지를 다르게 표시한다.
+    const emptyMessageMap = {
+      all:       <><p>아직 할 일이 없어요.</p><p>새로운 할 일을 추가해보세요!</p></>,
+      active:    <p>진행 중인 할 일이 없어요.</p>,
+      completed: <p>완료된 할 일이 없어요.</p>,
+    }
+
     return (
       <div className="empty-state">
-        <p>아직 할 일이 없어요.</p>
-        <p>새로운 할 일을 추가해보세요!</p>
+        {emptyMessageMap[currentFilter]}
       </div>
     )
   }

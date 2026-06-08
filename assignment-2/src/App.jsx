@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import TodoInput from './components/TodoInput'
 import TodoList from './components/TodoList'
+import FilterTabs from './components/FilterTabs'
 
 // 날짜 키 생성 (YYYY-MM-DD) — step4에서 src/utils/date.js로 분리 예정
 function formatDateKey(date) {
@@ -23,6 +24,25 @@ function App() {
   // useState와 달리 값이 바뀌어도 리렌더를 유발하지 않는다.
   // nextId는 화면에 표시되지 않으므로 useRef가 적합하다.
   const nextId = useRef(1)
+
+  // 현재 선택된 필터 상태
+  const [currentFilter, setCurrentFilter] = useState('all')
+
+  // ── 파생 상태 (Derived State) ─────────────────────────
+  // filteredList는 별도의 state가 아니라 todoList + currentFilter에서 매 렌더마다 계산한다.
+  // Vanilla JS의 getFilteredList() 함수에 해당하지만,
+  // React에서는 상태가 바뀌면 렌더가 자동으로 실행되므로 함수 호출이 필요 없다.
+  const filteredList = todoList.filter(item => {
+    if (currentFilter === 'active')    return !item.completed
+    if (currentFilter === 'completed') return item.completed
+    return true
+  })
+
+  const countLabelMap = {
+    all:       '의 할 일',
+    active:    '의 진행 중인 할 일',
+    completed: '의 완료된 할 일',
+  }
 
   // ── Create ──────────────────────────────────────────
   function createTodo(text) {
@@ -71,17 +91,21 @@ function App() {
         <p className="app-subtitle">오늘 할 일을 정리해보세요</p>
       </header>
 
-      {/* TodoInput에 createTodo를 onAdd prop으로 전달 */}
       <TodoInput onAdd={createTodo} />
 
       <section className="list-section">
+        {/* 필터 탭: 현재 필터값과 변경 함수를 props로 전달 */}
+        <FilterTabs currentFilter={currentFilter} onFilterChange={setCurrentFilter} />
+
         <div className="list-header">
-          <span className="todo-count">{todoList.length}개</span>
-          <span className="todo-count-label">의 할 일</span>
+          <span className="todo-count">{filteredList.length}개</span>
+          <span className="todo-count-label">{countLabelMap[currentFilter]}</span>
         </div>
-        {/* CRUD 핸들러를 모두 props로 전달한다. */}
+
+        {/* filteredList를 전달하므로 TodoList는 필터 로직을 알 필요가 없다 */}
         <TodoList
-          todoList={todoList}
+          todoList={filteredList}
+          currentFilter={currentFilter}
           onToggle={toggleComplete}
           onSave={saveEdit}
           onDelete={deleteTodo}
