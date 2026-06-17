@@ -1,0 +1,148 @@
+지금부터 네가 할 일은, 내가 assignment-1에서 vanilla js, 2에서 react로 구현한 todo를 assignment-3 폴더 아래에서 next.js를 사용한 구조로 리팩토링하는 것이야.
+각 단계는 한 번에 진행하는 것이 아닌 한 단계 한 단계 진행해야 하며, 각 구현이 완료되면 docs/ 아래에 단계별 핵심 구현 내용과, 이전 과제에서 react만 사용하여 작성했을 떄와 어떤 차이가 있는지를 비교한 문서가 작성되어야 해.
+아래는 구현의 단계 및 세부 명세야.
+
+step 0 전체 구조 잡기
+- next.js 프로젝트 생성
+- 백엔드, 프론트 엔드 디렉토리 구분하여 생성
+
+[참고] 프로젝트 최종 구조 예상도
+assignment-3/
+├── frontend/
+│   ├── app/
+│   │   ├── api/
+│   │   │   └── todos/
+│   │   │       └── route.ts       # API Route (백엔드 프록시)
+│   │   ├── todos/
+│   │   │   ├── [todoId]/
+│   │   │   │   └── page.tsx       # Todo 수정 페이지
+│   │   │   ├── new/
+│   │   │   │   └── page.tsx       # Todo 생성 페이지
+│   │   │   ├── error.tsx
+│   │   │   ├── loading.tsx
+│   │   │   └── page.tsx           # Todo 목록 페이지
+│   │   ├── actions.ts             # Server Actions (CRUD 로직)
+│   │   ├── globals.css
+│   │   ├── layout.tsx
+│   │   └── page.tsx               # 루트 페이지
+│   ├── .env.local
+│   ├── .gitignore
+│   ├── next-env.d.ts
+│   ├── next.config.mjs
+│   ├── postcss.config.mjs
+│   ├── package.json
+│   ├── tsconfig.json
+│   └── README.md
+│
+└── backend/
+    ├── main.py                    # FastAPI 앱 + 모든 로직 (라우터, DB, 모델, 스키마)
+    ├── requirements.txt
+    └── .env.local
+
+[프로젝트 생성 코드 예시]
+
+# 루트 디렉토리 생성
+mkdir kakao-assignment-3 && cd kakao-assignment-3
+
+# 프론트엔드 디렉토리 생성 (Next.js 세팅은 1번 미션에서 진행)
+npx create-next-app@latest frontend
+
+# 백엔드 디렉토리 생성
+mkdir backend
+
+
+step 1. 프론트엔드 프로젝트 세팅
+-  localhost:3000으로 접속 시 next.js 기본화면 출력
+
+step 2. 백엔드 프로젝트 세팅
+- localhost:8000으로 접속시 message: Hello World 출력
+- venv 활성화 확인
+
+step 3. 다음 main.py를 참고하여 Todo 데이터 모델, DB 설정, CRUD 엔드포인트 구현
+
+# main.py
+
+from fastapi import FastAPI
+from sqlalchemy import create_engine, Column, Integer, String, Boolean
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from pydantic import BaseModel
+
+# DB 설정
+DATABASE_URL = "sqlite:///./todos.db"
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+# DB 모델 (테이블 구조 정의)
+class Todo(Base):
+    __tablename__ = "todos"
+    id = Column(Integer, primary_key=True, index=True)
+    # 나머지 필드를 직접 추가해보세요
+
+# Pydantic 스키마 (요청/응답 데이터 구조 정의)
+class TodoCreate(BaseModel):
+    # 생성 시 필요한 필드를 직접 추가해보세요
+    pass
+
+# 테이블 생성
+Base.metadata.create_all(bind=engine)
+
+# FastAPI 앱 생성
+app = FastAPI(title="Todo API")
+
+# FastAPI 앱 미들웨어 및 CORS 설정
+app.add_middleware(
+    # 필요한 부분을 직접 작성해보세요.
+)
+
+# DB 세션 의존성
+def get_db():
+    # 필요한 부분을 직접 작성해보세요.
+    pass
+
+# 엔드포인트 구현
+# API 목록에 해당되는 부분을 직접 구현해보세요.
+
+# 구현할 API 목록
+GET /todos, POST /todos, PUT /todos/{id}, DELETE /todos/{id}
+
+4. Next.js에서 Todo 페이지 구현하기
+- `app/todos/page.tsx`에 Todo 목록 페이지를 구현해요
+- `app/todos/new/page.tsx`에 Todo 생성 페이지를 구현해요
+- `app/todos/[todoId]/page.tsx`에 Todo 수정 페이지를 구현해요
+- `app/todos/error.tsx`에 에러 발생 시 보여줄 화면을 구현해요
+- `app/todos/loading.tsx`에 데이터 로딩 중 보여줄 화면을 구현해요
+- 각 페이지에서 Server Component와 Client Component를 적절히 구분해요
+
+5. API Route 작성하고 프론트-백엔드 연동하기
+- route.ts에 API Route 작성
+- actions.ts에 서버 액션을 작성하고 각 페이지에서 호출
+
+6. 환경 변수 설정
+- .env.local에 환경변수를 설정하여 민감 URL 숨기기
+
+# frontend/.env.local
+NEXT_PUBLIC_API_URL=http://localhost:3000/api
+BACKEND_URL=http://localhost:8000
+
+# backend/.env.local 
+DATABASE_URL=sqlite:///./todos.db
+
+
+[ 심화 단계 ]
+
+step 5. 서버 기반 상태별 필터링 구현하기
+- 전체 / 진행 중 / 완료 필터 탭 구현
+- ?filter=active, ?filter=completed 등 URL 파라미터로 관리
+- 필터링은 클라이언트가 아닌 FastAPI 서버에서 처리
+
+step 6. 서버 기반 Todo 검색 기능 구현하기
+- ?search=키워드 형태의 URL 파라미터로 관리
+- 필터링과 검색 동시 적용
+- FastAPI에 검색 엔드포인트 추가, 서버에서 키워드로 필터링
+
+
+------------------------------------------------------------------------------
+
+위 내용을 기반으로, assignment-3를 구현할 계획을 docs 아래에 작성해줘
