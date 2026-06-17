@@ -1,73 +1,57 @@
 # Assignment-3 CLAUDE.md
 
-## 프로젝트 개요
-
-Next.js + FastAPI로 Todo 앱을 구현하는 프로젝트.  
-구현 계획: `docs/plan.md` 참고.
+Next.js + FastAPI Todo 앱 구현 프로젝트. 구현 계획: `docs/plan.md`
 
 ---
 
 ## 자동화 규칙
 
-### 1. 프롬프트 로그 (`docs/prompt-log.md`)
+### 프롬프트 로그 (`docs/prompt-log/`)
 
-**모든 대화 턴마다** 아래 형식으로 `docs/prompt-log.md`에 항목을 추가한다.
+매 대화 턴마다 현재 단계 파일에 항목을 추가한다.
 
-```markdown
-## [YYYY-MM-DD] 프롬프트 N
+**파일명:** `pre-discussion.md` / `step0.md` / `step1.md` … (단계별 분리)  
+**새 파일 생성 시 헤더:** `# <아이콘> Step N — <제목>`  
+**항목 형식:**
+- 제목: `## [YYYY-MM-DD] 프롬프트 N` (N은 전체 파일 통틀어 순서대로 증가)
+- **요청:** 한 줄 요약
+- **결과:** 한 줄~세 줄 요약
 
-**요청:** <사용자 요청 한 줄 요약>
+### 트러블슈팅 (`docs/troubleshooting/`)
 
-**결과:** <수행한 작업 및 결과 한 줄~세 줄 요약>
-```
+오류가 발생·해결된 경우에만 현재 단계 파일에 항목을 추가한다. 문제 없는 턴은 수정하지 않는다.
 
-- 날짜는 오늘 날짜 기준으로 작성한다.
-- 프롬프트 번호(N)는 해당 파일에서 순서대로 증가한다.
-- 파일이 없으면 헤더와 함께 새로 생성한다.
-- 요청과 결과 모두 **최대한 간결하게** 작성한다 (각각 한 줄~세 줄 이내).
+**파일명:** 프롬프트 로그와 동일 패턴  
+**항목 형식:**
+- 제목: `## [YYYY-MM-DD] 문제 제목`
+- **증상 / 원인 / 해결 / 관련 파일**
+- 미해결 시: `해결: 미해결 — <현재 상태>`
 
-### 2. 트러블슈팅 로그 (`docs/troubleshooting.md`)
+### 아이콘 기준
 
-**오류나 문제가 발생하고 해결된 경우** 아래 형식으로 `docs/troubleshooting.md`에 항목을 추가한다.
-
-```markdown
-## [YYYY-MM-DD] 문제 제목
-
-**증상:** <어떤 오류/문제가 발생했는지>
-
-**원인:** <왜 발생했는지>
-
-**해결:** <어떻게 해결했는지>
-
-**관련 파일:** <해당 파일 경로>
-```
-
-- 문제가 없는 대화 턴에는 이 파일을 수정하지 않는다.
-- 해결하지 못한 문제는 **해결:** 항목을 "미해결 — <현재 상태>" 로 기재한다.
+📋 사전논의 · 🏗️ Step0 · 🖥️ Step1 · ⚙️ Step2 · 🗄️ Step3 · 🎨 Step4 · 🔗 Step5 · 🔍 Step6 · 🔎 Step7
 
 ---
 
-## 일반 개발 규칙
+## 개발 규칙
 
-- 각 Step 구현 완료 후 반드시 `docs/step{N}-log.md`를 작성한다.
-- 문서에는 핵심 구현 내용과 React(assignment-2) 대비 차이점을 포함한다.
-- 코드 변경 시 기존 파일을 먼저 Read한 후 Edit한다.
-- 커밋은 사용자가 명시적으로 요청할 때만 수행한다.
-- 환경변수는 `.env.local`에서 관리하며 코드에 하드코딩하지 않는다.
-- 컴포넌트에 주석을 추가하지 않는다 (이름으로 역할이 명확해야 함).
+- Step 완료 후 `docs/step{N}-log.md` 작성 (핵심 구현 + React 대비 차이점 포함)
+- 파일 수정 시 Read 후 Edit
+- 커밋은 명시적 요청 시에만
+- 환경변수는 `.env.local` 관리, 하드코딩 금지
+- 코드에 주석 추가 금지
 
 ---
 
-## 디렉토리 구조 참고
+## 디렉토리 구조
 
 ```
 assignment-3/
-├── CLAUDE.md              ← 현재 파일
 ├── docs/
-│   ├── plan.md            ← 전체 구현 계획
-│   ├── prompt-log.md      ← 자동 생성: 프롬프트 기록
-│   ├── troubleshooting.md ← 자동 생성: 트러블슈팅 기록
-│   └── step{N}-log.md     ← 단계별 구현 완료 후 작성
-├── frontend/              ← Next.js 앱
-└── backend/               ← FastAPI 앱
+│   ├── plan.md
+│   ├── prompt-log/      pre-discussion.md · step{N}.md
+│   ├── troubleshooting/ pre-discussion.md · step{N}.md
+│   └── step{N}-log.md
+├── frontend/
+└── backend/
 ```

@@ -1,4 +1,4 @@
-# 트러블슈팅 & 아키텍처 Q&A
+# 📋 사전 논의 — 계획 수립 및 구조 이해
 
 ---
 
@@ -44,7 +44,7 @@ app/todos/[todoId]/
 
 `page.tsx`가 서버에서 Todo 데이터를 가져온 뒤, `<EditTodoForm todo={todo} />`처럼 props로 클라이언트 컴포넌트에 전달한다.
 
-**브라우저로 전달되는 방식 (추가 보완):**
+**브라우저로 전달되는 방식:**
 
 `EditTodoForm`의 HTML도 서버에서 미리 렌더링되어 초기 HTML 응답에 함께 포함된다. 별도 파일로 따로 전달되는 것이 아니다.
 
@@ -75,8 +75,7 @@ app/todos/[todoId]/
 
 **원인:** React의 Error Boundary 메커니즘이 클라이언트 전용이다.
 
-**해결:** Next.js 스펙상 `error.tsx`는 반드시 `'use client'`여야 한다.  
-이유는 두 가지다.
+**해결:** Next.js 스펙상 `error.tsx`는 반드시 `'use client'`여야 한다.
 1. Error Boundary는 React의 클라이언트 전용 기능이다 (서버 렌더링 중 발생한 에러를 클라이언트에서 캐치하는 구조).
 2. `reset()` 함수(재시도 버튼)가 클라이언트 상호작용을 필요로 한다.
 
