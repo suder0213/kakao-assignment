@@ -82,6 +82,13 @@ def create_todo(body: TodoCreate, db: Session = Depends(get_db)):
     db.refresh(todo)
     return todo
 
+@app.get("/todos/{todo_id}", response_model=TodoResponse)
+def get_todo(todo_id: int, db: Session = Depends(get_db)):
+    todo = db.query(Todo).filter(Todo.id == todo_id).first()
+    if not todo:
+        raise HTTPException(status_code=404, detail="Todo not found")
+    return todo
+
 @app.put("/todos/{todo_id}", response_model=TodoResponse)
 def update_todo(todo_id: int, body: TodoUpdate, db: Session = Depends(get_db)):
     todo = db.query(Todo).filter(Todo.id == todo_id).first()
