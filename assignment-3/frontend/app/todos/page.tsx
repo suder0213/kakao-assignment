@@ -6,16 +6,27 @@ type Todo = {
   completed: boolean;
 };
 
-async function getTodos(): Promise<Todo[]> {
-  const res = await fetch(`${process.env.BACKEND_URL}/todos`, {
-    cache: "no-store",
-  });
+const TABS = [
+  { label: "전체", value: "" },
+  { label: "진행 중", value: "active" },
+  { label: "완료", value: "completed" },
+];
+
+async function getTodos(filter?: string): Promise<Todo[]> {
+  const url = new URL(`${process.env.BACKEND_URL}/todos`);
+  if (filter) url.searchParams.set("filter", filter);
+  const res = await fetch(url.toString(), { cache: "no-store" });
   if (!res.ok) throw new Error("할 일 목록을 불러오지 못했습니다.");
   return res.json();
 }
 
-export default async function TodosPage() {
-  const todos = await getTodos();
+export default async function TodosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ filter?: string }>;
+}) {
+  const { filter } = await searchParams;
+  const todos = await getTodos(filter);
 
   return (
     <main style={{ maxWidth: 560, margin: "0 auto", padding: "48px 16px" }}>
@@ -28,7 +39,31 @@ export default async function TodosPage() {
         </p>
       </header>
 
-      <div style={{ marginBottom: 16, display: "flex", justifyContent: "flex-end" }}>
+      <div style={{ marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 6 }}>
+          {TABS.map((tab) => {
+            const isActive = (filter ?? "") === tab.value;
+            return (
+              <Link
+                key={tab.value}
+                href={tab.value ? `/todos?filter=${tab.value}` : "/todos"}
+                style={{
+                  padding: "6px 14px",
+                  borderRadius: 20,
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  textDecoration: "none",
+                  backgroundColor: isActive ? "var(--color-primary)" : "var(--color-white)",
+                  color: isActive ? "white" : "var(--color-text-muted)",
+                  border: `1px solid ${isActive ? "var(--color-primary)" : "var(--color-border)"}`,
+                }}
+              >
+                {tab.label}
+              </Link>
+            );
+          })}
+        </div>
+
         <Link
           href="/todos/new"
           style={{

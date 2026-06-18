@@ -71,8 +71,13 @@ def root():
     return {"message": "Hello World"}
 
 @app.get("/todos", response_model=list[TodoResponse])
-def get_todos(db: Session = Depends(get_db)):
-    return db.query(Todo).all()
+def get_todos(filter: Optional[str] = None, db: Session = Depends(get_db)):
+    query = db.query(Todo)
+    if filter == "active":
+        query = query.filter(Todo.completed == False)
+    elif filter == "completed":
+        query = query.filter(Todo.completed == True)
+    return query.all()
 
 @app.post("/todos", response_model=TodoResponse, status_code=201)
 def create_todo(body: TodoCreate, db: Session = Depends(get_db)):
