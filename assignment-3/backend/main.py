@@ -71,12 +71,14 @@ def root():
     return {"message": "Hello World"}
 
 @app.get("/todos", response_model=list[TodoResponse])
-def get_todos(filter: Optional[str] = None, db: Session = Depends(get_db)):
+def get_todos(filter: Optional[str] = None, search: Optional[str] = None, db: Session = Depends(get_db)):
     query = db.query(Todo)
     if filter == "active":
         query = query.filter(Todo.completed == False)
     elif filter == "completed":
         query = query.filter(Todo.completed == True)
+    if search:
+        query = query.filter(Todo.title.like(f"%{search}%"))
     return query.all()
 
 @app.post("/todos", response_model=TodoResponse, status_code=201)

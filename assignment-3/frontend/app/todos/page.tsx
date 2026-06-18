@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Suspense } from "react";
+import SearchInput from "./SearchInput";
 
 type Todo = {
   id: number;
@@ -12,9 +14,10 @@ const TABS = [
   { label: "완료", value: "completed" },
 ];
 
-async function getTodos(filter?: string): Promise<Todo[]> {
+async function getTodos(filter?: string, search?: string): Promise<Todo[]> {
   const url = new URL(`${process.env.BACKEND_URL}/todos`);
   if (filter) url.searchParams.set("filter", filter);
+  if (search) url.searchParams.set("search", search);
   const res = await fetch(url.toString(), { cache: "no-store" });
   if (!res.ok) throw new Error("할 일 목록을 불러오지 못했습니다.");
   return res.json();
@@ -23,10 +26,10 @@ async function getTodos(filter?: string): Promise<Todo[]> {
 export default async function TodosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ filter?: string }>;
+  searchParams: Promise<{ filter?: string; search?: string }>;
 }) {
-  const { filter } = await searchParams;
-  const todos = await getTodos(filter);
+  const { filter, search } = await searchParams;
+  const todos = await getTodos(filter, search);
 
   return (
     <main style={{ maxWidth: 560, margin: "0 auto", padding: "48px 16px" }}>
@@ -39,14 +42,22 @@ export default async function TodosPage({
         </p>
       </header>
 
+      <Suspense fallback={null}>
+        <SearchInput />
+      </Suspense>
+
       <div style={{ marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ display: "flex", gap: 6 }}>
           {TABS.map((tab) => {
             const isActive = (filter ?? "") === tab.value;
+            const params = new URLSearchParams();
+            if (tab.value) params.set("filter", tab.value);
+            if (search) params.set("search", search);
+            const query = params.toString();
             return (
               <Link
                 key={tab.value}
-                href={tab.value ? `/todos?filter=${tab.value}` : "/todos"}
+                href={`/todos${query ? `?${query}` : ""}`}
                 style={{
                   padding: "6px 14px",
                   borderRadius: 20,
@@ -83,6 +94,7 @@ export default async function TodosPage({
       <section style={{ backgroundColor: "var(--color-white)", borderRadius: 10, boxShadow: "var(--shadow)", overflow: "hidden" }}>
         <div style={{ padding: "12px 20px", borderBottom: "1px solid var(--color-border)", fontSize: "0.88rem", color: "var(--color-text-muted)" }}>
           <span style={{ fontWeight: 700, color: "var(--color-primary)" }}>{todos.length}개</span>의 할 일
+          {search && <span style={{ marginLeft: 8 }}>— &quot;{search}&quot; 검색 결과</span>}
         </div>
 
         {todos.length === 0 ? (
