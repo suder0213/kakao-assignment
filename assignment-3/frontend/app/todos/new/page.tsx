@@ -17,8 +17,7 @@ export default function NewTodoPage() {
       return;
     }
     setLoading(true);
-    // Step 5에서 Server Action으로 교체 예정
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/todos`, {
+    await fetch("/api/todos", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: title.trim() }),

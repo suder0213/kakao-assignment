@@ -11,14 +11,11 @@ export default function EditTodoForm({ todo }: { todo: Todo }) {
   const [completed, setCompleted] = useState(todo.completed);
   const [loading, setLoading] = useState(false);
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
   async function handleUpdate(e: { preventDefault: () => void }) {
     e.preventDefault();
     if (!title.trim()) return;
     setLoading(true);
-    // Step 5에서 Server Action으로 교체 예정
-    await fetch(`${apiUrl}/todos/${todo.id}`, {
+    await fetch(`/api/todos/${todo.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: title.trim(), completed }),
@@ -30,8 +27,7 @@ export default function EditTodoForm({ todo }: { todo: Todo }) {
   async function handleDelete() {
     if (!confirm("정말 삭제할까요?")) return;
     setLoading(true);
-    // Step 5에서 Server Action으로 교체 예정
-    await fetch(`${apiUrl}/todos/${todo.id}`, { method: "DELETE" });
+    await fetch(`/api/todos/${todo.id}`, { method: "DELETE" });
     router.push("/todos");
     router.refresh();
   }
