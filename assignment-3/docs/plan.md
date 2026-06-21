@@ -232,6 +232,69 @@ assignment-3/
 
 ---
 
+---
+
+### Step 8 (심화) — 주간 날짜 뷰 및 일별 Todo 관리
+
+**목표:** assignment-2의 WeekNav/DayCell 기능을 Next.js + FastAPI 구조로 재구현. URL 기반 날짜 상태로 일별 Todo 조회, 주간 바에서 요일 선택 및 이전/다음 주 이동.
+
+**작업 목록:**
+
+1. **백엔드 변경**
+   - `Todo` 모델에 `date` 컬럼 추가 (`String`, nullable)
+   - 기존 DB 호환을 위한 런타임 마이그레이션 (`ALTER TABLE` — 컬럼이 이미 있으면 무시)
+   - `TodoCreate` 스키마에 `date: Optional[str]` 추가 (미입력 시 오늘 날짜 사용)
+   - `GET /todos`에 `date` 쿼리 파라미터 추가 (해당 날짜 Todo만 반환)
+   - `GET /todos/week-counts?week_start=YYYY-MM-DD` 엔드포인트 추가 — 해당 주 7일의 `{date: count}` 반환
+     - ⚠️ `/todos/{todo_id}` 보다 앞에 정의해야 FastAPI 라우터 충돌 방지
+
+2. **프론트엔드 — 날짜 유틸리티**
+   - `frontend/app/todos/utils/date.ts` 신규 생성
+     - `formatDateKey(date: Date): string` — `YYYY-MM-DD` 변환
+     - `getWeekStart(dateStr: string): Date` — 해당 주의 월요일 반환
+     - `getWeekDates(dateStr: string): string[]` — 주의 월~일 7개 날짜 배열
+     - `getWeekRangeText(weekDates: string[]): string` — `"6월 2일 - 6월 8일"` 형식
+     - `shiftWeek(mondayStr: string, offset: number): string` — ±1주 이동한 월요일 반환
+
+3. **프론트엔드 — WeekBar Client Component**
+   - `frontend/app/todos/WeekBar.tsx` 신규 생성 (`'use client'`)
+   - Props: `weekDates`, `weekCounts`, `selectedDate`, `prevWeekDate`, `nextWeekDate`, `rangeText`, `currentFilter`, `currentSearch`
+   - 이전/다음 주 버튼: `router.push(?date=월요일&filter=...&search=...)`
+   - 요일 셀 클릭: `router.push(?date=YYYY-MM-DD&filter=...&search=...)`
+   - 오늘 날짜 강조 (border), 선택된 날짜 강조 (배경색), Todo 개수 뱃지
+
+4. **프론트엔드 — 기존 파일 수정**
+
+   | 파일 | 변경 내용 |
+   |---|---|
+   | `todos/page.tsx` | `date` searchParam 추가, `getTodos`에 date 전달, `getWeekCounts` 호출, WeekBar 렌더링, 필터 탭·검색 링크에 date 보존, "새 할 일" 버튼에 date 파라미터 포함 |
+   | `todos/new/page.tsx` | Server Component로 전환: `searchParams.date` 읽어 `NewTodoForm`에 전달 |
+   | `todos/new/NewTodoForm.tsx` | 신규 생성 (기존 `new/page.tsx` Client 로직 분리): `defaultDate` prop 수신, POST 바디에 `date` 포함, 완료 후 `/todos?date=...` 복귀 |
+
+**데이터 흐름:**
+
+```
+URL: /todos?date=2026-06-21&filter=active&search=키워드
+  └─ Server Component(page.tsx)
+       ├─ getTodos(filter, search, date) → FastAPI GET /todos?date=...&filter=...&search=...
+       ├─ getWeekCounts(weekStart) → FastAPI GET /todos/week-counts?week_start=...
+       └─ WeekBar(weekDates, weekCounts, selectedDate, ...)  ← Client Component
+            └─ 요일 클릭 → router.push(/todos?date=2026-06-22&filter=active&search=키워드)
+                              └─ Server Component 재실행
+```
+
+**완료 기준:**
+- 주간 바에서 요일 클릭 시 해당 날짜의 Todo만 표시
+- 이전/다음 주 버튼으로 주 이동 가능
+- 오늘 날짜 강조, 선택된 날짜 강조
+- 날짜별 Todo 개수 뱃지 표시
+- 새 Todo 생성 시 선택된 날짜로 등록
+- 필터·검색이 날짜 변경 시에도 유지
+
+**작성할 문서:** `docs/step8-log.md`
+
+---
+
 ## 진행 체크리스트
 
 - [ ] Step 0 — 프로젝트 뼈대 생성
@@ -242,3 +305,4 @@ assignment-3/
 - [ ] Step 5 — API Route + Server Actions 연동
 - [ ] Step 6 (심화) — 서버 필터링
 - [ ] Step 7 (심화) — 서버 검색
+- [ ] Step 8 (심화) — 주간 날짜 뷰 및 일별 Todo 관리
