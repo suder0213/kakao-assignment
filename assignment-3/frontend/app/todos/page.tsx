@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import SearchInput from "./SearchInput";
+import WeekBar from "./WeekBar";
+import { formatDateKey, getWeekDates, getWeekRangeText, shiftWeek } from "./utils/date";
 
 type Todo = {
   id: number;
   title: string;
   completed: boolean;
+  date?: string;
 };
 
 const TABS = [
@@ -14,26 +17,47 @@ const TABS = [
   { label: "완료", value: "completed" },
 ];
 
-async function getTodos(filter?: string, search?: string): Promise<Todo[]> {
+async function getTodos(filter?: string, search?: string, date?: string): Promise<Todo[]> {
   const url = new URL(`${process.env.BACKEND_URL}/todos`);
   if (filter) url.searchParams.set("filter", filter);
   if (search) url.searchParams.set("search", search);
+  if (date) url.searchParams.set("date", date);
   const res = await fetch(url.toString(), { cache: "no-store" });
   if (!res.ok) throw new Error("할 일 목록을 불러오지 못했습니다.");
+  return res.json();
+}
+
+async function getWeekCounts(weekStart: string): Promise<Record<string, number>> {
+  const url = new URL(`${process.env.BACKEND_URL}/todos/week-counts`);
+  url.searchParams.set("week_start", weekStart);
+  const res = await fetch(url.toString(), { cache: "no-store" });
+  if (!res.ok) return {};
   return res.json();
 }
 
 export default async function TodosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ filter?: string; search?: string }>;
+  searchParams: Promise<{ filter?: string; search?: string; date?: string }>;
 }) {
-  const { filter, search } = await searchParams;
-  const todos = await getTodos(filter, search);
+  const { filter, search, date } = await searchParams;
+  const today = formatDateKey(new Date());
+  const selectedDate = date ?? today;
+
+  const weekDates = getWeekDates(selectedDate);
+  const weekStart = weekDates[0];
+  const rangeText = getWeekRangeText(weekDates);
+  const prevWeekDate = shiftWeek(weekStart, -1);
+  const nextWeekDate = shiftWeek(weekStart, +1);
+
+  const [todos, weekCounts] = await Promise.all([
+    getTodos(filter, search, selectedDate),
+    getWeekCounts(weekStart),
+  ]);
 
   return (
     <main style={{ maxWidth: 560, margin: "0 auto", padding: "48px 16px" }}>
-      <header style={{ marginBottom: 32 }}>
+      <header style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: "2rem", fontWeight: 800, color: "var(--color-primary)", letterSpacing: "-0.5px" }}>
           Todo
         </h1>
@@ -41,6 +65,17 @@ export default async function TodosPage({
           오늘 할 일을 정리해보세요
         </p>
       </header>
+
+      <WeekBar
+        weekDates={weekDates}
+        weekCounts={weekCounts}
+        selectedDate={selectedDate}
+        prevWeekDate={prevWeekDate}
+        nextWeekDate={nextWeekDate}
+        rangeText={rangeText}
+        currentFilter={filter ?? ""}
+        currentSearch={search ?? ""}
+      />
 
       <Suspense fallback={null}>
         <SearchInput />
@@ -51,13 +86,13 @@ export default async function TodosPage({
           {TABS.map((tab) => {
             const isActive = (filter ?? "") === tab.value;
             const params = new URLSearchParams();
+            params.set("date", selectedDate);
             if (tab.value) params.set("filter", tab.value);
             if (search) params.set("search", search);
-            const query = params.toString();
             return (
               <Link
                 key={tab.value}
-                href={`/todos${query ? `?${query}` : ""}`}
+                href={`/todos?${params.toString()}`}
                 style={{
                   padding: "6px 14px",
                   borderRadius: 20,
@@ -76,7 +111,7 @@ export default async function TodosPage({
         </div>
 
         <Link
-          href="/todos/new"
+          href={`/todos/new?date=${selectedDate}`}
           style={{
             backgroundColor: "var(--color-primary)",
             color: "white",

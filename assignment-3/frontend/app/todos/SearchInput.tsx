@@ -11,11 +11,12 @@ export default function SearchInput() {
   function handleSubmit(e: { preventDefault: () => void }) {
     e.preventDefault();
     const params = new URLSearchParams();
+    const date = searchParams.get("date");
     const filter = searchParams.get("filter");
+    if (date) params.set("date", date);
     if (filter) params.set("filter", filter);
     if (value.trim()) params.set("search", value.trim());
-    const query = params.toString();
-    router.push(`/todos${query ? `?${query}` : ""}`);
+    router.push(`/todos?${params.toString()}`);
   }
 
   return (
